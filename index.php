@@ -1,49 +1,87 @@
 <?php
 
+session_start();
+require('connection.php');
+include 'chromePhp.php';
+
+	//ChromePhp::log(stream_get_transports(void));
+
+function format_email($info, $format) {
+ 
+    //set the root
+    $root = $_SERVER['DOCUMENT_ROOT'].'/registration/email_templates';
+
+    //grab the template content
+    $template = file_get_contents($root.'/signup_template.'.$format);
+
+    //replace all the tags
+    $template = preg_replace('{NAME}', $info['name'], $template);
+    $template = preg_replace('{EMAIL}', $info['email'], $template);
+    $template = preg_replace('{KEY}', $info['key'], $template);
+    $template = preg_replace('{SITEPATH}','localhost/registration', $template);
+         
+    //return the html of the template
+    return $template;
+
+}
+
+function send_email($info) {
+         
+    //format each email
+    $body = format_email($info,'html');
+    $body_plain_txt = format_email($info,'txt');
+ 
+    //setup the mailer
+    $transport = Swift_SmtpTransport::newInstance('smtp.gmail.com', 465, "ssl")
+		->setUsername('maciej.jalowiec@gmail.com')
+		->setPassword('LepperHimmler123');
+    $mailer = Swift_Mailer::newInstance($transport);
+    $message = Swift_Message::newInstance('Confirm Yo Email')
+    	->setFrom(array('maciej.jalowiec@gmail.com' => 'Site Name'))
+    	->setTo(array($info['email'] => $info['name']))
+    	->setBody($body_plain_txt)
+    	->addPart($body, 'text/html');
+
+    $result = $mailer->send($message);
+
+    return $result;
+     
+}
+
 class User {
 
 	public $regName;
 	public $regUsername;
 	public $regEmail;
 	public $regPassword;
+	public $regKey;
 
 	public function __construct (
 		$regName,
 		$regUsername,
 		$regEmail,
-		$regPassword) {
+		$regPassword,
+		$regKey) {
 			$this->regName = $regName;
 			$this->regUsername = $regUsername;
 			$this->regEmail = $regEmail;
 			$this->regPassword = $regPassword;
+			$this->regKey = $regKey;
 	}
 
-	public function displayUser() {
-		echo "Your name is ".$this->regName.", your username is ".$this->regUsername.", and your email is ".$this->regEmail.".";
-	}
-
-	public function pushToDatabase() {
-		$servername = "localhost";
-		$username = "root";
-		$password = "";
-		$database = "registered_users";
-
-		$conn = new mysqli($servername, $username, $password, $database);
-		if ($conn->connect_error) {
-			die("Connection failed: ".$conn->connect_error);
-		}
-
-		$query = "INSERT INTO users(name, username, email, password) VALUES (
+	public function pushToDatabase($conn) {
+		$query = "INSERT INTO users(name, username, email, password, email_key) VALUES (
 			'$this->regName',
 			'$this->regUsername',
 			'$this->regEmail',
-			'$this->regPassword'
+			'$this->regPassword',
+			'$this->regKey'
 			)";
 		if ($conn->query($query) === TRUE) {
-			echo " Congratulations, registration is complete!";
+			ChromePhp::log("Congratulations, registration is complete!");
 		}
 		else {
-			echo "error: ".$conn->error;
+			ChromePhp::log("error: ".$conn->error);
 		}
 		$conn->close();
 	}
@@ -75,26 +113,61 @@ class User {
 		$password = $_POST['password'];
 		$passwordRepeat = $_POST['passwordRepeat'];
 
+		$digits='/[0-9]/';
+		$chars='/[\$\!\@\?\<\>\[\]\{\}\#\%\^\&\*\(\)]/';
+		$capitals='/[A-Z]/';
+
+		$loginCheck = "SELECT * FROM users WHERE username='".$_POST['username']."'";
+		$resultLoginCheck = $conn->query($loginCheck);
+
+		$emailCheck = "SELECT * FROM users WHERE email='".$_POST['email']."'";
+		$resultEmailCheck = $conn->query($emailCheck);
+
 		if (empty($name) OR empty($username) OR empty($email) OR empty($passwordRepeat)) {
 			echo "<p>You did not fill out the necessary info! <button onclick=\"history.go(-1);\">Back</button></p>";
 		}
+		else if (strpbrk($name, $chars) OR strpbrk($username, $chars)) {
+			echo "The name or username contains forbidden characters! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if ($password != $passwordRepeat) {
+			echo "The passwords don't match! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if (strlen($password) < 8) {
+			echo "The password is too short! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if (!preg_match($digits, $password) OR !preg_match($chars, $password) OR !preg_match($capitals, $password)) {
+			echo "Make sure the password has one capital character, one digit and one special character! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if (!strpbrk($email, '@.')) {
+			echo "Invalid email address! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if ($resultLoginCheck->num_rows != 0) {
+			echo "This username is already taken! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
+		else if ($resultEmailCheck->num_rows != 0) {
+			echo "This email is already taken! <button onclick=\"history.go(-1);\">Back</button></p>";
+		}
 		else {
-			if ($password != $passwordRepeat) {
-				echo "The passwords don't match! <button onclick=\"history.go(-1);\">Back</button></p>";
-			}
-			if (!strpos($email, '@')) {
-				echo "Invalid email address! <button onclick=\"history.go(-1);\">Back</button></p>";
-			}
-			else {
-				echo "<p>Here's your data:</p>
-				<p>Name: ".$name."</p>
-				<p>Username: ".$username."</p>
-				<p>Email: ".$email."</p>";
+			$password = password_hash ($password, PASSWORD_DEFAULT);
 
-				$newuser = new User($name, $username, $email, $password);
+			$emailKey = $username . $email . date('mY');
+			$emailKey = md5($emailKey);
 
-				echo $newuser->displayUser();
-				$newuser->pushToDatabase();
+			$newuser = new User($name, $username, $email, $password, $emailKey);
+			include_once 'swiftmailer/lib/swift_required.php';
+			
+			$info = array(
+			    'name' => $name,
+			    'email' => $email,
+			    'key' => $emailKey
+			);
+
+			if(send_email($info)){
+				$newuser->pushToDatabase($conn);
+				header("Location: thank_you.php");
+			}
+			else {			                     
+				echo "There was a problem with sending out a confirmation email! <button onclick=\"history.go(-1);\">Back</button></p>";
 			}
 		}
 	} ?>
