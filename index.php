@@ -1,7 +1,7 @@
 <?php
 
 session_start();
-require('connection.php');
+require ('connection.php');
 include 'chromePhp.php';
 
 	//ChromePhp::log(stream_get_transports(void));
@@ -95,13 +95,13 @@ class User {
 	<head><title>Registration</title></head>
 	<body>
 	<?php if(!isset($_POST['submit']) OR !isset($_POST['name']) OR !isset($_POST['username']) OR !isset($_POST['email']) OR !isset($_POST['password'])) { ?>
-		<p>Please fill in the form below. * indicates a required field.</p>
+		<p>Please fill in the form below.</p>
 		<form method="post" action="index.php">
-		<p>Name* <input type="text" name="name" /></p>
-		<p>Username* <input type="text" name="username" /></p>
-		<p>Email* <input type="text" name="email" /></p>
-		<p>Password* <input type="password" name="password" /></p>
-		<p>Repeat password* <input type="password" name="passwordRepeat" /></p>
+		<p>Name <input type="text" name="name" /></p>
+		<p>Username <input type="text" name="username" /></p>
+		<p>Email <input type="text" name="email" /></p>
+		<p>Password <input type="password" name="password" /></p>
+		<p>Repeat password <input type="password" name="passwordRepeat" /></p>
 
 		<input type="submit" name="submit" value="submit" />
 		</form>
@@ -123,29 +123,50 @@ class User {
 		$emailCheck = "SELECT * FROM users WHERE email='".$_POST['email']."'";
 		$resultEmailCheck = $conn->query($emailCheck);
 
+		$steps_passed = 0;
+
 		if (empty($name) OR empty($username) OR empty($email) OR empty($passwordRepeat)) {
-			echo "<p>You did not fill out the necessary info! <button onclick=\"history.go(-1);\">Back</button></p>";
+			echo "<p>You did not fill out the necessary info!<br>";
 		}
-		else if (strpbrk($name, $chars) OR strpbrk($username, $chars)) {
-			echo "The name or username contains forbidden characters! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if (strpbrk($name, $chars) OR strpbrk($username, $chars)) {
+			echo "The name or username contains forbidden characters!<br>";
 		}
-		else if ($password != $passwordRepeat) {
-			echo "The passwords don't match! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if ($password != $passwordRepeat) {
+			echo "The passwords don't match!<br>";
 		}
-		else if (strlen($password) < 8) {
-			echo "The password is too short! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if (strlen($password) < 8) {
+			echo "The password is too short!<br>";
 		}
-		else if (!preg_match($digits, $password) OR !preg_match($chars, $password) OR !preg_match($capitals, $password)) {
-			echo "Make sure the password has one capital character, one digit and one special character! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if (!preg_match($digits, $password) OR !preg_match($chars, $password) OR !preg_match($capitals, $password)) {
+			echo "Make sure the password has one capital character, one digit and one special character!<br>";
 		}
-		else if (!strpbrk($email, '@.')) {
-			echo "Invalid email address! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if (!strpbrk($email, '@.')) {
+			echo "Invalid email address!<br>";
 		}
-		else if ($resultLoginCheck->num_rows != 0) {
-			echo "This username is already taken! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if ($resultLoginCheck->num_rows != 0) {
+			echo "This username is already taken!<br>";
 		}
-		else if ($resultEmailCheck->num_rows != 0) {
-			echo "This email is already taken! <button onclick=\"history.go(-1);\">Back</button></p>";
+		else {$steps_passed++;}
+
+		if ($resultEmailCheck->num_rows != 0) {
+			echo "This email is already taken!<br>";
+		}
+		else {$steps_passed++;}
+
+		if ($steps_passed < 8) {
+			echo "<button onclick=\"history.go(-1);\">Back</button></p>";
 		}
 		else {
 			$password = password_hash ($password, PASSWORD_DEFAULT);

@@ -23,15 +23,13 @@ include 'chromePhp.php';
 			$row_count = $key_check->num_rows;
 
 			if ($row_count == 1) {
-				$confirm_query = "UPDATE users SET email_confirm = 1 WHERE email = '$email' AND email_key = '$key' LIMIT 1";
-				$conn->query($confirm_query);
+				$confirm_query_1 = "UPDATE users SET email_confirm = 1, email_key = 0 WHERE email = '$email' AND email_key = '$key' LIMIT 1";
+				$conn->query($confirm_query_1);
 				$conn->close();
-				echo "Thank you for confirming your email! You will be now taken to login page.";
-				header("Location: login.php");
+				echo "Thank you for confirming your email! <a href='login.php'>Go to login page</a>";
 			}
 			else {
-				echo "This email is already confirmed.";
-				
+				echo "This email is already confirmed. <a href='login.php'>Go to login page</a>";
 			}
 		}
 
