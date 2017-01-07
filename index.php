@@ -184,8 +184,9 @@ class User {
 			);
 
 			if(send_email($info)){
-				$newuser->pushToDatabase($conn);
-				header("Location: thank_you.php");
+				if ($newuser->pushToDatabase($conn)) {
+					header("Location: thank_you.php");
+				}
 			}
 			else {			                     
 				echo "There was a problem with sending out a confirmation email! <button onclick=\"history.go(-1);\">Back</button></p>";

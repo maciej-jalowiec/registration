@@ -95,16 +95,74 @@
 				echo "<button onclick=\"history.go(-1);\">Back</button></p>";
 			}
 			else {
+				$bmr = 10 * $weight +6.25 * $height - 5 * $age;
+				if ($gender == "male") {
+					$bmr += 161;
+				}
+				$bmr = round($bmr);
+
+				$tmr = 0;
+				switch ($activity) {
+					case 1:
+						$tmr = $bmr * 1.2;
+						break;
+					case 2:
+						$tmr = $bmr * 1.4;
+						break;
+					case 3:
+						$tmr = $bmr * 1.9;
+						break;
+				}
+				$tmr -= 200;
+				$tmr = round($tmr);
+
+				$user_protein = 0;
+				switch ($activity) {
+					case 1:
+						$user_protein = $weight * 1.2;
+						break;
+					case 2:
+						$user_protein = $weight * 1.5;
+						break;
+					case 3:
+						$user_protein = $weight * 2.0;
+						break;
+				}
+				$user_protein = round($user_protein);
+				
+				$user_fat = 0;
+				switch ($gender) {
+					case "male":
+						$user_fat = $weight * 0.6;
+						break;
+					case "female":
+						$user_protein = $weight;
+						break;
+				}
+				$user_fat = round($user_fat);
+
+				$user_carbs = ($tmr - ($user_protein * 4 + $user_fat * 9)) / 4;
+				$user_carbs = round($user_carbs);
+
 				$query = "UPDATE users SET
 				weight='$weight',
 				height='$height',
 				age='$age',
 				gender='$gender',
 				activity='$activity',
+				bmr='$bmr',
+				tmr='$tmr',
+				user_carbs='$user_carbs',
+				user_protein='$user_protein',
+				user_fat='$user_fat',
 				data_timestamp='$data_timestamp' WHERE email='".$_SESSION['login_user']."'";
 				if ($conn->query($query) === TRUE) { ?>
-					Congratulations, the data is complete!<br>
-					Now it's time to make your first meal plans. Click <a href="plans.php">here</a> to continue.
+					Congratulations, the data is complete! Based on your information, we have calculated the following daily intake values for you:<br>
+					You should have <?php echo $tmr; ?> kcal per day.<br>
+					You should have <?php echo $user_carbs; ?> grams of carbohydrates (carbs) per day.<br>
+					You should have <?php echo $user_protein; ?> grams of protein per day.<br>
+					You should have <?php echo $user_fat; ?> grams of fat per day.<br>
+					Now it's time to make your first meal plan. Click <a href="plans.php">here</a> to continue.
 				<?php }
 				else {
 					ChromePhp::log("error: ".$conn->error);
