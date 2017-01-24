@@ -50,10 +50,25 @@
 			$dinner_portion = 1;
 
 			$goal = "";
-			$kcal_json = "";
-			$carbs_json = "";
-			$protein_json = "";
-			$fat_json = "";
+			$kcal_plan = "";
+			$carbs_plan = "";
+			$protein_plan = "";
+			$fat_plan = "";
+
+			$check_query = "SELECT * FROM users WHERE email='".$_SESSION['login_user']."'";
+			$login_check = $conn->query($check_query);
+			$row_count = $login_check->num_rows;
+
+			if ($row_count != 1) {
+				echo "<p>Error! Contact administrator!</p>";
+			}
+			else {
+				$user_data = mysqli_fetch_assoc($login_check);
+				$kcal_user = $user_data['tmr'];
+				$carbs_user = $user_data['user_carbs'];
+				$protein_user = $user_data['user_protein'];
+				$fat_user = $user_data['user_fat'];
+			}
 
 			$kcal = 0;
 			$carbs = 0;
@@ -84,10 +99,10 @@
 						  
 							/* Building JSON */
 
-							$kcal_json .= $ingredient_data['kcal']." * ".$breakfast[$db_key]." * x[1] + ";
-							$carbs_json .= $ingredient_data['carbs']." * ".$breakfast[$db_key]." * x[1] + ";
-							$protein_json .= $ingredient_data['protein']." * ".$breakfast[$db_key]." * x[1] + ";
-							$fat_json .= $ingredient_data['fat']." * ".$breakfast[$db_key]." * x[1] + ";
+							$kcal_plan .= $ingredient_data['kcal']." * ".$breakfast[$db_key]." * x[1] + ";
+							$carbs_plan .= $ingredient_data['carbs']." * ".$breakfast[$db_key]." * x[1] + ";
+							$protein_plan .= $ingredient_data['protein']." * ".$breakfast[$db_key]." * x[1] + ";
+							$fat_plan .= $ingredient_data['fat']." * ".$breakfast[$db_key]." * x[1] + ";
 
 							/* /Building JSON */
 
@@ -132,10 +147,10 @@
 						  
 							/* Building JSON */
 
-							$kcal_json .= $ingredient_data['kcal']." * ".$snack[$db_key]." * x[2] + ";
-							$carbs_json .= $ingredient_data['carbs']." * ".$snack[$db_key]." * x[2] + ";
-							$protein_json .= $ingredient_data['protein']." * ".$snack[$db_key]." * x[2] + ";
-							$fat_json .= $ingredient_data['fat']." * ".$snack[$db_key]." * x[2] + ";
+							$kcal_plan .= $ingredient_data['kcal']." * ".$snack[$db_key]." * x[2] + ";
+							$carbs_plan .= $ingredient_data['carbs']." * ".$snack[$db_key]." * x[2] + ";
+							$protein_plan .= $ingredient_data['protein']." * ".$snack[$db_key]." * x[2] + ";
+							$fat_plan .= $ingredient_data['fat']." * ".$snack[$db_key]." * x[2] + ";
 
 							/* /Building JSON */
 
@@ -179,10 +194,10 @@
 
 							/* Building JSON */
 
-							$kcal_json .= $ingredient_data['kcal']." * ".$dinner[$db_key]." * x[3] + ";
-							$carbs_json .= $ingredient_data['carbs']." * ".$dinner[$db_key]." * x[3] + ";
-							$protein_json .= $ingredient_data['protein']." * ".$dinner[$db_key]." * x[3] + ";
-							$fat_json .= $ingredient_data['fat']." * ".$dinner[$db_key]." * x[3] + ";
+							$kcal_plan .= $ingredient_data['kcal']." * ".$dinner[$db_key]." * x[3] + ";
+							$carbs_plan .= $ingredient_data['carbs']." * ".$dinner[$db_key]." * x[3] + ";
+							$protein_plan .= $ingredient_data['protein']." * ".$dinner[$db_key]." * x[3] + ";
+							$fat_plan .= $ingredient_data['fat']." * ".$dinner[$db_key]." * x[3] + ";
 
 							/* /Building JSON */
 
@@ -213,8 +228,15 @@
 				  </tr>
 				  </table></p>
 			<?php 
-			$goal = $kcal_json.$carbs_json.$protein_json.$fat_json;
-			$goal = substr($goal, 0, -2);
+			$kcal_plan = substr($kcal_plan, 0, -3);
+			$carbs_plan = substr($carbs_plan, 0, -3);
+			$protein_plan = substr($protein_plan, 0, -3);
+			$fat_plan = substr($fat_plan, 0, -3);
+			$goal = "("
+				.$kcal_plan." - ".$kcal_user.") * (".$kcal_plan." - ".$kcal_user.") + ("
+				.$carbs_plan." - ".$carbs_user.") * (".$carbs_plan." - ".$carbs_user.") + ("
+				.$protein_plan." - ".$protein_user.") * (".$protein_plan." - ".$protein_user.") + ("
+				.$fat_plan." - ".$fat_user.") * (".$fat_plan." - ".$fat_user.")";
 
 			/* Sending JSON */
 			$url = 'https://rason.net/api/optimize';
