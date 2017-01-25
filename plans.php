@@ -12,6 +12,7 @@
 ?>
 <html>
 	<head><title>Your Meal Plans</title>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
 
 		<style type="text/css">
 			.tg  {border-collapse:collapse;border-spacing:0;width:900px;}
@@ -21,6 +22,8 @@
 			.tg .tg-lqy6{text-align:right;vertical-align:top}
 			.tg .tg-yw4l{vertical-align:top}
 		</style>
+
+<?php require ('rason_connection.php'); ?>
 
 	</head>
 	<body>
@@ -239,32 +242,38 @@
 				.$fat_plan." - ".$fat_user.") * (".$fat_plan." - ".$fat_user.")";
 
 			/* Sending JSON */
-			$url = 'https://rason.net/api/optimize';
-			$ch = curl_init($url);
-
-			class Emp {
-				public $variables = "";
-				public $constraints  = "";
-				public $objective = "";
-			}
-
-			$e = new Emp();
-			$e->variables = '{x: { lower: [0, 0, 0], finalValue: [] }}';
-			$e->constraints = '';
-			$e->objective = '{obj: { type: "maximize", formula:'.$goal.', finalValue: [] }}';
-			$jsonDataEncoded = json_encode($e);
-
-			curl_setopt($ch, CURLOPT_POST, 1);
-			curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonDataEncoded);
-			curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json')); 
+			$data_string = json_encode(
+				array("variables" =>
+					array("x" =>
+						array("lower" =>
+							array(0, 0, 0),
+							"finalValue" => array())),
+						"objective" =>
+							array("obj" =>
+								array("type" => "maximize",
+									"formula" => $goal,
+									"finalValue" => array()))));
+			echo $data_string;
+         
+			$ch = curl_init('https://rason.net/api/optimize');                                                                      
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");                                                                     
+			curl_setopt($ch, CURLOPT_POSTFIELDS, $data_string);                                                                  
+			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);                                                                      
+			curl_setopt($ch, CURLOPT_HTTPHEADER, array(                                                                          
+			    'Content-Type: application/json',                                                                                
+			    'Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoidXNlciIsInRpbWUiOiI2MCIsIm1vbnRoIjoiMTQ0MDAiLCJ2YXJpYWJsZXMiOiIyMDAiLCJsaW5lYXJfdmFycyI6IjIwMCIsIm5vbmxpbmVhcl92YXJzIjoiMTAwIiwidW5jZXJ0YWluX3ZhcnMiOiIyNCIsInVuY2VydGFpbl9mY25zIjoiMTIiLCJmdW5jdGlvbnMiOiIxMDAiLCJpbnRlZ2VycyI6IjIwMCIsImVuZ2luZXMiOiIwMDAwMDAwIiwibWF4VHJpYWxzIjoiMTAwMCIsInVzZXJpZCI6IjAiLCJ1c2VybmFtZSI6Im1hY2llai5qYWxvd2llY0BnbWFpbC5jb20iLCJwbGFuIjoiTm9uZSIsImlhdCI6IjE0ODE3MzA3MDEuODA0NTkiLCJqdGkiOiIwYzhlZWQ3ZTc4YTBjY2YwMmY0MTAwYjQzYzNkMjJkMCJ9.2z4OTgP2rO76GOco2YvWtnLswOMtxYWqtRi7vUeBPpc'                                                                    
+			));              
+                                                                                                   			                                                                                                                     
 			$result = curl_exec($ch);
-
-			$received_json = file_get_contents('https://rason.net/api/optimize');
-			echo $received_json;
-			$new_json = json_decode($received_json);
+			$result_php = json_decode($result);
+			if (!$result) {
+				echo "dupa";
+			}
 
 		}
 			?>
+
+<input type="button" value="Optimize" onclick="rasonApp.startSolve();" />
 
 
 	
