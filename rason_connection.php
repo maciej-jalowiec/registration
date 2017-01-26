@@ -134,8 +134,8 @@
 
             // Print the results as a JSON string, showing the structure of the results object returned by the rason server
             results: function (data, textStatus, jqXHR) {
-                var resultHtml = '\nResult:\n' + JSON.stringify(data, null, 2);
-                $('#_msg').append(resultHtml);
+                var result_json = JSON.stringify(data, null, 2);
+                $('#_msg').append(result_json);
                 rasonApp.deleteModel();
             },
 
@@ -146,8 +146,8 @@
                 if (rasonApp.RASONModelID) {
                     rasonApp.ajaxOpts.method = 'DELETE';
                     $.ajax(rasonApp.RASONModelID + '/delete', rasonApp.ajaxOpts);
-                    var resultHtml = '\nModel deleted.';
-                    $('#_msg').append(resultHtml);
+                    var result_json = '\nModel deleted.';
+                    $('#_msg').append(result_json);
                     rasonApp.RASONModelID = 0;
                 }
             },
@@ -163,8 +163,8 @@
             },
 
             stopped: function (data, textStatus, jqXHR) {
-                var resultHtml = '\nModel stopped.';
-                $('#_msg').append(resultHtml);
+                var result_json = '\nModel stopped.';
+                $('#_msg').append(result_json);
                 rasonApp.deleteModel();
             }
         };

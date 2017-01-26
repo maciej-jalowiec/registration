@@ -242,7 +242,7 @@
 				.$fat_plan." - ".$fat_user.") * (".$fat_plan." - ".$fat_user.")";
 
 			/* Sending JSON */
-			$data_string = json_encode(
+			/* $data_string = json_encode(
 				array("variables" =>
 					array("x" =>
 						array("lower" =>
@@ -268,10 +268,15 @@
 			$result_php = json_decode($result);
 			if (!$result) {
 				echo "dupa";
-			}
-
-		}
+			} */
 			?>
+			<script>
+			rasonApp.objective.obj.formula = <?php $goal; ?>
+			</script>
+			<?php
+		} 
+			?>
+
 
 <input type="button" value="Optimize" onclick="rasonApp.startSolve();" />
 
